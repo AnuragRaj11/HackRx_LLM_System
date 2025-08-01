@@ -2,17 +2,17 @@ from pypdf import PdfWriter
 import os
 
 # Get the absolute path of the directory where this script is located
-# This script is expected to be in the root of HackRx_LLM_System
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
-# List of your individual PDF filenames
-# These files are expected to be in the 'source_pdfs' subdirectory
+# List of all your PDF filenames, including the new one
 pdf_list = [
     "BAJHLIP23020V012223.pdf",
     "CHOTGDP23004V012223.pdf",
     "EDLHLGA23009V012223.pdf",
     "HDFHLIP23024V072223.pdf",
     "ICIHLIP22012V012223.pdf",
+    # Add the new PDF filename here
+    "Arogya Sanjeevani Policy - CIN - U10200WB1906GOI001713 1.pdf",
 ]
 
 # The output merged PDF will be in the main project root
