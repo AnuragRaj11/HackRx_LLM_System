@@ -5,7 +5,7 @@ import os
 
 # Your ngrok or localtunnel URL
 # IMPORTANT: Update this with your actual public URL for the /hackrx/run endpoint
-WEBHOOK_URL = "https://d40ffe421837.ngrok-free.app/hackrx/run" 
+WEBHOOK_URL = "https://d5a562f9ed26.ngrok-free.app/hackrx/run" 
 
 # Your bearer token
 API_BEARER_TOKEN = os.getenv("API_BEARER_TOKEN", "74b1158d301e42af454a706d7610b664511de7b16c859c882a6bbb02cc936ed8")
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     # The URL should be your active ngrok/localtunnel URL.
     
     # You will need to replace the URL below
-    WEBHOOK_URL = "https://d40ffe421837.ngrok-free.app/hackrx/run"
+    WEBHOOK_URL = "https://d5a562f9ed26.ngrok-free.app/hackrx/run"
 
     # For testing, you can use the local URL, but it won't reflect network latency
     local_url = "http://localhost:8000/hackrx/run"
