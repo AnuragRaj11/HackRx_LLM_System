@@ -1,6 +1,7 @@
 import os
 import asyncio
 from dotenv import load_dotenv
+import time # Import time for sleep
 
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -83,7 +84,6 @@ async def startup_event():
 
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0, google_api_key=GOOGLE_API_KEY)
 
-        # Final, corrected Prompt Template for strict, accurate output
         prompt_template = """
         You are an expert policy analyst. Your goal is to answer a list of questions about a set of combined insurance policies.
         For each question, extract the most relevant information directly from the provided context and present it in a clear, single-paragraph format.
@@ -114,6 +114,24 @@ async def startup_event():
         print("Please ensure your GOOGLE_API_KEY is correct and 'policy.pdf' exists.")
         return
 
+# Helper function for exponential backoff retry logic with increased delays
+async def _call_qa_chain_with_retry(qa_chain_instance, query_dict, max_retries=5, initial_delay=5.0): # Increased initial_delay and max_retries
+    for i in range(max_retries):
+        try:
+            return await qa_chain_instance.ainvoke(query_dict)
+        except Exception as e:
+            # Check if it's a quota error specifically
+            if "429 Resource has been exhausted" in str(e) or "quota" in str(e).lower():
+                delay = initial_delay * (2 ** i) # Exponential backoff
+                print(f"LLM quota exceeded for query '{query_dict.get('query', '')}': {e}. Retrying in {delay:.2f} seconds...")
+                await asyncio.sleep(delay)
+            else:
+                # For other errors, re-raise immediately or after fewer retries
+                print(f"LLM call failed for query '{query_dict.get('query', '')}': {e}. No retry for non-quota error.")
+                raise # Re-raise non-quota errors immediately
+    raise Exception(f"Failed to get response after {max_retries} retries due to quota limits for query: {query_dict.get('query', '')}")
+
+
 @app.post(
     "/hackrx/run",
     response_model=QueryResponse,
@@ -130,8 +148,11 @@ async def run_submission(request_body: QueryRequest):
     print(f"Questions: {request_body.questions}")
 
     try:
-        # Use a list of tasks to run LLM calls concurrently for low latency
-        tasks = [qa_chain.ainvoke({"query": question}) for question in request_body.questions]
+        # Use a list of tasks to run LLM calls concurrently with robust retry logic
+        tasks = [
+            _call_qa_chain_with_retry(qa_chain, {"query": question})
+            for question in request_body.questions
+        ]
         results = await asyncio.gather(*tasks) # This runs all the tasks in parallel
         
         answers = []
